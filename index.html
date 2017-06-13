@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>UNO</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.3/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.3/angular-route.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="lobby.css">
+    <link rel="stylesheet" href="uno.css">
+    <script type="text/javascript">var highway_path = 'ws://127.0.0.1:8500'</script>
+    <style>
+        #stats{
+            height:100%;
+            z-index:9997;
+        }
+
+        .row{
+            height:100vh;
+        }
+
+        body{
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        #win{
+            position: absolute;
+            width:100%;
+            height:100%;
+            font-size:100px;
+            top:0;
+            left:0;
+            text-align: center;
+            vertical-align: middle;
+            z-index:9999;
+            background-color: cadetblue;
+        }
+
+        #chat{
+            background-color: white;
+            height: 35vh;
+            position: absolute;
+            bottom:0;
+            right:0;
+            width:15vw;
+            z-index:9998;
+        }
+
+        #chat-messages{
+            overflow:auto;
+            height: 70%;
+        }
+    </style>
+</head>
+<body ng-app="Main" ng-controller="baseController">
+    <div id="win" ng-cloak ng-show="winner!==''">{{winner}} won!</div>
+    <div ng-cloak class="alert alert-danger" ng-show="errormsg.disconnect">{{errormsg.disconnect}}</div>
+    <ng-view></ng-view>
+
+    <div class="container-fluid" id="chat" ng-cloak ng-show="player.loggedIn">
+        <div id="chat-messages">
+            <div ng-repeat="message in lobby.chat" style="text-align: left"><span style="color:red;">{{message.player}}: </span><span>{{message.message}}</span><br></div>
+        </div>
+
+        <div class="row" style="position: absolute;bottom: 0;height:auto;width:100%" ng-show="player.inLobby">
+            <input class="col-sm-8 form-control" ng-model="chatMessage">
+                <button class="col-sm-4 btn btn-default" ng-click="chat(chatMessage);chatMessage=''">Send</button>
+        </div>
+    </div>
+
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="lobby/lobby.js"></script>
+    <script src="uno/uno.js"></script>
+    <script src="highway.js/highway.bundle.js"></script>
+	<script>
+        var Highway = require("/highway.js");
+
+        function Login(){}
+        function LobbyList(){}
+        function LobbyCreate(){}
+        function LobbyUserJoin(){}
+        function LobbyUserLeave(){}
+        function LobbyKick(){}
+        function LobbyJoin(){}
+        function LobbyPlayers(){}
+        function LobbyLeave(){}
+        function LobbyHost(){}
+        function LobbyStart(){}
+        function LobbyPlaying(){}
+        function LobbyChat(){}
+        function LobbyChatMessage(){}
+
+        function UnoGiveCard(){}
+        function UnoTurn(){}
+        function UnoCardStack(){}
+        function UnoPlayCard(){} 
+        function UnoDrawCard(){}
+        function UnoSync(){}
+        function UnoWin(){}
+        function UnoDirection(){}
+        function UnoCardCount(){}
+
+        angular.module("UNO");
+        angular.module("Lobby");
+
+        var app = angular.module("Main",["ngRoute","UNO","Lobby"]);
+
+        app.config(['$routeProvider', function ($routeProvider) {
+
+            $routeProvider
+                .when('/UNO', {
+                    controller: 'UnoController',
+                    templateUrl: 'uno/uno.html'
+                })
+         
+                .when('/', {
+                    controller: 'lobbyController',
+                    templateUrl: 'lobby/lobby.html'
+                })
+         
+                .otherwise({ redirectTo: '/' });
+        }]);
+
+        app.controller("baseController",function($scope,$location,$rootScope,$timeout,$interval){ 
+            //variables available for every route
+            $scope.player = {name:"default",loggedIn:false,inLobby:false};
+            $scope.lobby = {name:"default",players:[],host:"",chat:[]};
+            $scope.errormsg = {"lobby":{},"player":{}};
+            $scope.winner = "";
+
+
+            //functions for websocket pipes
+
+            $scope.login = function(name){
+                console.log("Name: ",name);
+                highway.send(name,"login");
+                $scope.player.name = name;
+            };
+
+            Login.prototype.run = function(data,handler){
+                console.log("Login: ",data);
+                if(data){
+                    $scope.player.loggedIn = true; 
+                    $scope.errormsg.player.login = "";
+                }else{
+                    $scope.errormsg.player.login = "Error - User name taken!";
+                }
+                $scope.$apply();
+            };
+
+            $scope.lobbyListCallback;
+            LobbyList.prototype.run = function(data,handler){
+                console.log(data);
+                if($scope.lobbyListCallback)
+                    $scope.lobbyListCallback(data,handler);
+                $scope.$apply();
+            };
+
+            LobbyCreate.prototype.run = function(data,handler){
+                if(data){
+                    $scope.player.inLobby = data;
+                    $scope.lobby.players = [$scope.player.name];
+                    $scope.lobby.host = $scope.player.name;
+                    $scope.errormsg.lobby.name = "";
+                }
+                else{
+                    $scope.errormsg.lobby.name = "Error - Lobby name taken!";
+                }
+                $scope.$apply();
+            };
+
+            $scope.lobbyJoin = function(lobbyName){
+                $scope.lobby.host = "";
+                $scope.lobby.name = lobbyName;
+                highway.send(lobbyName,"lobby_join");
+            };
+
+            LobbyJoin.prototype.run = function(data,handler){
+                $scope.player.inLobby = data;
+                $scope.$apply();
+            };
+
+            $scope.lobbyLeave = function(){
+                highway.send(null,"lobby_leave");
+            };
+
+            LobbyLeave.prototype.run = function(data,handler){
+                $location.path("/");
+                $scope.lobby.name = "";
+                $scope.player.inLobby = false;
+                $scope.lobby.chat = [];
+                $scope.$apply();
+            }
+
+            LobbyPlayers.prototype.run = function(data,handler){
+                $scope.lobby.players = data;
+                $scope.$apply();
+            };
+
+            LobbyUserJoin.prototype.run = function(data,handler){ 
+                //data=name
+                $scope.lobby.players.push(data);
+                $scope.$apply();
+            };
+
+            LobbyUserLeave.prototype.run = function(data,handler){ 
+                //data=index of lobby.players list
+                $scope.lobby.players.splice(data,1);
+                $scope.$apply();
+            };
+
+            LobbyHost.prototype.run = function(data,handler){ 
+                //who is the current host
+                console.log(data);
+                $scope.lobby.host = data;
+                $scope.$apply();
+            };
+
+            $scope.lobbyStart = function(){
+                highway.send(null,"lobby_start");
+            };
+
+            LobbyStart.prototype.run = function(data,handler){ 
+                console.log("starting was "+(data)?"successful":"not working");
+            };
+
+            LobbyPlaying.prototype.run = function(data,handler){ 
+                console.log("lobby is playing?",data);
+                if(data){
+                    $location.path("/UNO");
+                }else{
+                    $location.path("/");
+                }
+                $scope.$apply();
+            };
+
+
+            $scope.UnoGiveCardCallback;
+            UnoGiveCard.prototype.run = function(data,handler){ 
+                if($scope.UnoGiveCardCallback){
+                    $scope.UnoGiveCardCallback(data,handler);
+                }else{
+                    $scope.UnoGiveCardInterval = $interval(function(){
+                        if($scope.UnoGiveCardCallback !== undefined){
+                            $scope.UnoGiveCardCallback(data,handler);
+                            $interval.cancel($scope.UnoGiveCardInterval);
+                        }
+                    },150);
+                }
+                $scope.$apply();
+            };
+
+            $scope.UnoTurnCallback;
+            UnoTurn.prototype.run = function(data,handler){ 
+                $scope.UnoTurnInterval = $interval(function(){
+                    if($scope.UnoTurnCallback !== undefined){
+                        $scope.UnoTurnCallback(data,handler);
+                        $interval.cancel($scope.UnoTurnInterval);
+                    }
+                },150);
+                $scope.$apply();
+            };
+
+
+            $scope.UnoCardStackCallback = undefined;
+            UnoCardStack.prototype.run = function(data,handler){ 
+                if($scope.UnoCardStackCallback !== undefined){
+                    $scope.UnoCardStackCallback(data,handler);
+                    $interval.cancel($scope.UnoCardStackInterval);
+                }else{
+                    $scope.UnoCardStackInterval = $interval(function(){
+                        if($scope.UnoCardStackCallback !== undefined){
+                            $scope.UnoCardStackCallback(data,handler);
+                            $interval.cancel($scope.UnoCardStackInterval);
+                        }
+                    },150);
+                }
+
+                $scope.$apply();
+            };
+
+            $scope.UnoDirectionCallback = undefined;
+            UnoDirection.prototype.run = function(data,handler){ 
+                $scope.UnoDirectionInterval = $interval(function(){
+                    if($scope.UnoDirectionCallback !== undefined){
+                        $scope.UnoDirectionCallback(data,handler);
+                        $interval.cancel($scope.UnoDirectionInterval);
+                    }
+                },150);
+                $scope.$apply();
+            };
+
+            UnoPlayCard.prototype.run = function(data,handler){
+                if(!data){
+                    highway.send(null,"uno_sync");
+                }
+            };
+
+            UnoDrawCard.prototype.run = function(data,handler){
+                
+            };
+
+
+            $scope.UnoSyncCallback = undefined;
+            UnoSync.prototype.run = function(data,handler){
+                if($scope.UnoSyncCallback !== undefined){
+                    $scope.UnoSyncCallback(data,handler);
+                    $scope.$apply();
+                }
+            };
+
+            UnoWin.prototype.run = function(data,handler){
+                $scope.winner = data;
+                $timeout(function(){$scope.winner = "";},2500);
+            };
+
+            $scope.kick = function(name){
+                $scope.send(name,"lobby_kick");
+            };
+
+            LobbyKick.prototype.run = function(data,handler){};
+
+            $scope.chat = function(message){
+                $scope.send(message,"lobby_chat")
+            };
+
+            LobbyChat.prototype.run = function(data,handler){};
+
+            var chat = document.getElementById('chat-messages');
+            LobbyChatMessage.prototype.run = function(data,handler){
+                $scope.lobby.chat.push(data);
+                $scope.$apply();
+                console.dir(chat);
+                if (Math.abs(chat.scrollTop + chat.clientHeight - chat.scrollHeight)<15) {
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            };
+
+            $scope.UnoCardCountCallback;
+            UnoCardCount.prototype.run = function(data,handler){
+                if($scope.UnoCardCountCallback){
+                    $scope.UnoCardCountCallback(data,handler);
+                }else{
+                    $scope.UnoCardStackInterval = $interval(function(){
+                        if($scope.UnoCardCountCallback !== undefined){
+                            $scope.UnoCardCountCallback(data,handler);
+                            $interval.cancel($scope.UnoCardStackInterval);
+                        }
+                    },150);
+                }
+                $scope.$apply();
+            };
+
+
+
+            $scope.send = function(data,route){
+                highway.send(data,route);
+            };
+
+            var highway = new Highway(highway_path, 
+            {   "login":new Login()
+                ,"lobby_list":new LobbyList(),"lobby_create":new LobbyCreate()
+                ,"lobby_join":new LobbyJoin(),"lobby_leave":new LobbyLeave()
+                ,"lobby_user_join":new LobbyUserJoin()
+                ,"lobby_user_leave":new LobbyUserLeave()
+                ,"lobby_kick": new LobbyKick()
+                ,"lobby_players":new LobbyPlayers()
+                ,"lobby_host":new LobbyHost(),"lobby_start":new LobbyStart()
+                ,"lobby_playing":new LobbyPlaying()
+                ,"lobby_chat":new LobbyChat()
+                ,"lobby_chat_message":new LobbyChatMessage()
+                ,"uno_card_stack":new UnoCardStack()
+                ,"uno_give_card":new UnoGiveCard()
+                ,"uno_draw_card":new UnoDrawCard()
+                ,"uno_play_card":new UnoPlayCard()
+                ,"uno_turn": new UnoTurn()
+                ,"uno_sync": new UnoSync()
+                ,"uno_win": new UnoWin()
+                ,"uno_direction":new UnoDirection()
+                ,"uno_card_count":new UnoCardCount()
+            }, true);
+
+            highway.onerror = function(event){
+                $scope.fail(event);
+            };
+
+
+            highway.onclose = function(event){
+                $scope.fail(event);
+            };
+
+            $scope.fail = function(event){
+                console.log("connection closed!");
+                $scope.errormsg.disconnect = "Client disconnected!";
+            };
+
+            highway.connect();
+
+        });
+
+
+        
+
+	</script>
+</body>
+</html>

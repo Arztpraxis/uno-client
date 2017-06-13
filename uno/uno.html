@@ -1,0 +1,30 @@
+<div class="row"  ng-class="{'alert-info':player.name == currentPlayer}">
+	
+	<div class="col-sm-2" id="draw-card" ng-click="drawCard()">
+		<button style="margin-bottom: 10px">Click here to draw card</button>
+		<uno-card ng-if="cardStack" id="card-stack" card="cardStack"></uno-card>
+	</div>
+
+	<div class="col-sm-8"></div>
+
+
+	<div id="stats" class="col-sm-2 container-fluid">
+        <ul class="list-group">
+            <li class="list-group-item">Name: {{player.name}}</li>
+            <li class="list-group-item">Lobby: {{lobby.name}}</li>
+            <li class="list-group-item">Direction: {{(direction == 2)?'\u2193':'\u2191'}}</li>
+            <ul>
+                <li class="list-group-item" ng-class="{true:'list-group-item-info',false:''}[p === currentPlayer]" ng-repeat="p in lobby.players">{{p}} - <span>{{playerCards[p]}}</span></li>
+            </ul>
+            <li class="list-group-item">Lobby Host: {{lobby.host}}</li>
+        </ul>
+        <button ng-click="send(null,'lobby_leave')">Leave game!</button>
+    </div>
+</div>
+<div id="player-hand">
+	<uno-card card="card" ng-repeat="card in hand track by $index" 
+	ng-disabled="!canPlay(card)"
+    style="margin-left:-200px; transform:rotate({{$index*5-hand.length*2.5}}deg);" ng-show="card.appearance !== undefined" ng-click="playCard()">
+	</uno-card>
+
+</div>

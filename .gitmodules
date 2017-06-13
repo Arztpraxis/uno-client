@@ -1,0 +1,3 @@
+[submodule "highway.js"]
+	path = highway.js
+	url = https://github.com/PhilipTrauner/highway.js

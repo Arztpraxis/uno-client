@@ -1,0 +1,164 @@
+body{
+    overflow:hidden;
+}
+
+.btn{
+    width:100%;
+}
+
+input{
+    text-align: center;
+}
+
+#player-hand{
+	width:75%;
+	position: absolute;
+	bottom:-50px;
+	left:50%;
+	transform:translateX(-50%);
+	text-align:center;
+}
+
+uno-card {
+    transition: all .1s linear;
+    -webkit-transition: all .1s linear;
+    width: 250px;
+    height: 400px;
+    transform-style: preserve-3d;
+    display:inline-block;
+    font-family: Impact, Charcoal, sans-serif;
+
+	text-shadow: 4px 4px 3px black,0px 0px 3px black;
+
+
+	-webkit-touch-callout: none; /* iOS Safari */
+	-webkit-user-select: none; /* Safari */
+	   -moz-user-select: none; /* Firefox */
+	    -ms-user-select: none; /* Internet Explorer/Edge */
+	        user-select: none; /* Non-prefixed version, currently
+	                              supported by Chrome and Opera */
+	
+	cursor:pointer;
+}
+
+uno-card>div{
+    width:100%;
+    height:100%;
+    border-radius: 3%;
+    box-shadow: white 0px 0px 0 10px;
+}
+
+
+uno-card:hover{
+    margin-bottom:75px !important;
+    zoom: 1.05;
+}
+
+#card-stack{
+    display:inline-block;
+}
+
+#card-stack:hover{
+    margin-bottom:0 !important;
+    zoom:0 !important;
+}
+
+#turn{
+    text-align: center;
+}
+
+#draw-card{
+    cursor: pointer;
+}
+
+uno-card[disabled="disabled"]{
+    margin-bottom:-50px !important;
+    zoom:0 !important;
+    filter:grayscale(50%) !important; 
+    -webkit-filter:grayscale(50%) !important;
+    cursor:not-allowed !important;
+}
+
+uno-card .number{
+	position:absolute;
+	text-align: center;
+	vertical-align: middle;
+	color:white;
+	font-size:55px;
+}
+
+uno-card .top{
+	top:15px;
+	left:15px;
+}
+
+uno-card .middle{
+	top:50%;
+	left:50%;
+	width:150%;
+	height:50%;
+	border-radius:100%;
+	font-weight: 900;
+	font-size: 150px;
+	line-height: 150px;
+	background-color:white;
+	transform: translateY(-50%) translateX(-50%) rotate(-65deg);
+}
+
+uno-card .middle span{
+	position: absolute;
+	top:25%;
+	left:30%;
+	transform: rotate(65deg) translateY(-25%) translateX(-25%);
+}
+
+uno-card .bottom{
+	transform: rotate(180deg);
+	right:15px;
+	bottom:15px;
+}
+
+
+
+
+
+
+.red{
+	background-color:rgb(130, 9, 0) !important;
+}
+
+.red .number.middle{
+	color:rgb(130, 9, 0) !important;
+}
+
+.green{
+	background-color:rgb(14, 130, 0) !important;
+}
+
+.green .number.middle{
+	color:rgb(14, 130, 0) !important;
+}
+
+.blue{
+	background-color:rgb(14, 91, 156) !important;
+}
+
+.blue .number.middle{
+	color:rgb(14, 91, 156) !important;
+}
+
+.yellow{
+	background-color:rgb(204, 183, 1) !important;
+}
+
+.yellow .number.middle{
+	color:rgb(255, 229, 0) !important;
+}
+
+.special{
+    background-color:black !important;
+}
+
+.special .number.middle{
+    color:black !important;
+}

@@ -1,0 +1,41 @@
+<h1>Welcome to UNO</h1>
+<div class="container">
+	<div style="margin:0 auto; max-width:25%;text-align:center;">
+		<div class="form-group" ng-hide="player.loggedIn">
+			<h2>Login</h2>
+			<input type="text" class="form-control" ng-model="loginName">
+			<button style="width:100%" class="btn btn-default" ng-click="login(loginName)">Login!</button>
+		</div>
+		<span class="alert alert-success" ng-show="player.loggedIn">Logged in as {{player.name}}!</span>
+		<span ng-show="errormsg.player.login" class="alert alert-danger">{{errormsg.player.login}}</span>
+
+		<div ng-if="!player.inLobby && player.loggedIn" ng-init="lobbyList()">
+			<h2>Join a LOBBY</h2>
+			<h3>Create new lobby!</h3>
+			<input class="form-control" ng-model="$parent.lobby.name">
+			<button class="btn btn-default" ng-click="lobbyCreate()">Create new lobby</button>
+			<span ng-show="errormsg.lobby.name" class="alert alert-danger">{{errormsg.lobby.name}}</span>
+
+			<h3>Join existing Lobby<span class="badge">{{length}}</span></h3>
+			<button class="btn btn-default" ng-click="lobbyList()">Refresh List</button>
+			<ul class="list-group">
+				<li class="list-group-item" ng-click="lobbyJoin(name)" ng-hide="details.playing" ng-repeat="(name,details) in lobbies">
+					{{name}} - Host: {{details.host}} - Count: {{details.playerCount}}
+				</li>
+			</ul>
+		</div>
+		<div ng-show="player.inLobby">
+			<div ng-show="lobby.host == player.name">
+				<h5>You are the Host!</h5>
+				<button class="btn btn-default" ng-disabled="lobby.players.length < 2" ng-click="lobbyStart()">Start game!</button>
+			</div>
+			<h4>In lobby {{lobby.name}}!</h4>
+			<ul class="list-group">
+				<li ng-repeat="p in lobby.players" 
+				ng-class="{true:'list-group-item-info',false:''}[p === lobby.host]" 
+				class="list-group-item">{{p}} <span class="badge" ng-click="kick(p)" ng-if="player.name === lobby.host">X</span></li>
+			</ul>
+			<button class="btn btn-default" ng-click="lobbyLeave()">Leave lobby</button>
+		</div>
+	</div>
+</div> 
